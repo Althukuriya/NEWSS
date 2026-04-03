@@ -1,4 +1,4 @@
-// ==================== WORKING VERSION - NO ERRORS ====================
+// ==================== WORKING VERSION - NO PLACEHOLDER ERRORS ====================
 const BLOG_URL = 'https://newwwwwsave.blogspot.com';
 const POSTS_PER_PAGE = 12;
 
@@ -23,12 +23,14 @@ function loadBloggerData(endpoint, callback) {
     document.body.appendChild(script);
 }
 
-// Parse blog post - FIXED: Working fallback image
+// Parse blog post - FIXED: Using working fallback image
 function parsePost(entry) {
     const content = entry.content.$t;
     const imgMatch = content.match(/<img[^>]+src="([^">]+)"/);
-    // FIXED: Using picsum.photos which is reliable
-    const fallbackImage = 'https://picsum.photos/400/250?random=' + Math.floor(Math.random() * 1000);
+    // FIXED: Using picsum.photos which is reliable and works
+    const randomId = Math.floor(Math.random() * 1000);
+    const fallbackImage = `https://picsum.photos/800/400?random=${randomId}`;
+    
     return {
         id: entry.id.$t.split('post-')[1],
         title: entry.title.$t || 'Untitled',
@@ -66,7 +68,7 @@ function calculateReadTime(content) {
     return `${Math.max(1, Math.ceil(words / 200))} min read`;
 }
 
-// Render a news card
+// Render a news card - FIXED onerror handler
 function renderCard(post) {
     return `
         <div class="news-card">
@@ -107,7 +109,6 @@ function loadHome() {
         const total = parseInt(data.feed.openSearch$totalResults?.$t || 0);
         const totalPages = Math.ceil(total / POSTS_PER_PAGE);
         
-        // Load categories for sidebar
         loadBloggerData('/feeds/posts/default?max-results=50', function(catData) {
             const categories = new Set();
             if (catData?.feed?.entry) {
@@ -152,7 +153,6 @@ function loadHome() {
             
             document.getElementById('dynamicContent').innerHTML = html;
             
-            // Pagination
             document.querySelectorAll('.pagination button').forEach(btn => {
                 btn.addEventListener('click', () => loadPage(parseInt(btn.dataset.page)));
             });
@@ -221,7 +221,6 @@ function loadPost() {
         const post = parsePost(data.entry);
         document.title = `${post.title} - NewsPortal`;
         
-        // Load related posts
         loadBloggerData('/feeds/posts/default?max-results=20', function(relatedData) {
             let relatedPosts = [];
             if (relatedData?.feed?.entry) {
@@ -487,7 +486,6 @@ function updateBookmarkCount() {
 }
 
 function fixMissingIcons() {
-    // Remove manifest link to fix 404 errors when running locally
     const manifestLink = document.querySelector('link[rel="manifest"]');
     if (manifestLink) {
         manifestLink.remove();
@@ -496,7 +494,7 @@ function fixMissingIcons() {
 
 // ==================== INITIALIZE ====================
 function init() {
-    fixMissingIcons();  // This removes the manifest.json request
+    fixMissingIcons();
     initDarkMode();
     initReadingProgress();
     initLiveSearch();
