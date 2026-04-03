@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html ⚡ lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+    <meta name="description" content="AMP version of news article">
+    <link rel="canonical" id="ampCanonical">
+    <link rel="amphtml" id="ampSelfLink">
+    <title>AMP Article - NewsPortal</title>
+    <script async src="https://cdn.ampproject.org/v0.js"></script>
+    <script async custom-element="amp-img" src="https://cdn.ampproject.org/v0/amp-img-0.1.js"></script>
+    <style amp-boilerplate>body{-webkit-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-moz-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-ms-animation:-amp-start 8s steps(1,end) 0s 1 normal both;animation:-amp-start 8s steps(1,end) 0s 1 normal both}@-webkit-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}</style>
+    <noscript><style amp-boilerplate>body{-webkit-animation:none;-moz-animation:none;-ms-animation:none;animation:none}</style></noscript>
+    <style amp-custom>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+            background: #fff;
+            color: #1a1a1a;
+        }
+        h1 { font-size: 28px; margin-bottom: 16px; line-height: 1.3; }
+        .meta { color: #666; font-size: 14px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 12px; }
+        .meta span { margin-right: 16px; }
+        amp-img { margin: 20px 0; border-radius: 12px; }
+        .content { font-size: 18px; }
+        .content p { margin-bottom: 20px; }
+        .back-link { display: inline-block; margin-top: 30px; color: #e63946; text-decoration: none; font-weight: 600; }
+        .header { margin-bottom: 20px; border-bottom: 2px solid #e63946; padding-bottom: 10px; }
+        .header h2 { margin: 0; font-size: 24px; }
+        .header span { color: #e63946; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>News<span>Portal</span> <span style="font-size:12px; background:#e63946; color:white; padding:2px 8px; border-radius:4px;">AMP</span></h2>
+    </div>
+    <div id="ampContent">
+        <div style="text-align:center; padding:40px;">Loading AMP version...</div>
+    </div>
+    <a href="#" id="backLink" class="back-link">← Read full version</a>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+        const BLOG_URL = 'https://yourblog.blogspot.com'; // CHANGE THIS
+        
+        if(postId) {
+            fetch(`${BLOG_URL}/feeds/posts/default/${postId}?alt=json`)
+                .then(res => res.json())
+                .then(data => {
+                    const entry = data.entry;
+                    const title = entry.title.$t;
+                    const published = new Date(entry.published.$t).toDateString();
+                    const author = entry.author?.[0]?.name?.$t || 'Editor';
+                    const content = entry.content.$t;
+                    const imgMatch = content.match(/<img[^>]+src="([^">]+)"/);
+                    const image = imgMatch ? imgMatch[1] : '';
+                    const cleanContent = content.replace(/<img[^>]*>/g, '');
+                    
+                    document.getElementById('ampContent').innerHTML = `
+                        <h1>${escapeHtml(title)}</h1>
+                        <div class="meta">
+                            <span><i class="far fa-calendar"></i> ${published}</span>
+                            <span><i class="far fa-user"></i> ${escapeHtml(author)}</span>
+                        </div>
+                        ${image ? `<amp-img src="${image}" width="800" height="400" layout="responsive" alt="${escapeHtml(title)}"></amp-img>` : ''}
+                        <div class="content">${cleanContent}</div>
+                    `;
+                    document.getElementById('ampCanonical').href = `post.html?id=${postId}`;
+                    document.getElementById('ampSelfLink').href = `amp.html?id=${postId}`;
+                    document.getElementById('backLink').href = `post.html?id=${postId}`;
+                    document.title = `${title} - AMP NewsPortal`;
+                })
+                .catch(err => {
+                    document.getElementById('ampContent').innerHTML = '<div style="text-align:center;padding:40px">Article not found</div>';
+                });
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+    </script>
+</body>
+</html>
