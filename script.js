@@ -1,4 +1,4 @@
-// ==================== WORKING VERSION - NO CORS ERRORS ====================
+// ==================== WORKING VERSION - NO ERRORS ====================
 const BLOG_URL = 'https://newwwwwsave.blogspot.com';
 const POSTS_PER_PAGE = 12;
 
@@ -23,10 +23,12 @@ function loadBloggerData(endpoint, callback) {
     document.body.appendChild(script);
 }
 
-// Parse blog post
+// Parse blog post - FIXED: Working fallback image
 function parsePost(entry) {
     const content = entry.content.$t;
     const imgMatch = content.match(/<img[^>]+src="([^">]+)"/);
+    // FIXED: Using picsum.photos which is reliable
+    const fallbackImage = 'https://picsum.photos/400/250?random=' + Math.floor(Math.random() * 1000);
     return {
         id: entry.id.$t.split('post-')[1],
         title: entry.title.$t || 'Untitled',
@@ -34,7 +36,7 @@ function parsePost(entry) {
         author: entry.author?.[0]?.name?.$t || 'Editor',
         content: content,
         summary: entry.summary?.$t || content.replace(/<[^>]*>/g, '').substring(0, 150) + '...',
-        image: imgMatch ? imgMatch[1] : 'https://via.placeholder.com/400x250?text=News',
+        image: imgMatch ? imgMatch[1] : fallbackImage,
         labels: entry.category?.map(c => c.term) || []
     };
 }
@@ -68,7 +70,7 @@ function calculateReadTime(content) {
 function renderCard(post) {
     return `
         <div class="news-card">
-            <img src="${post.image}" class="card-img" alt="${escapeHtml(post.title)}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x250?text=News'">
+            <img src="${post.image}" class="card-img" alt="${escapeHtml(post.title)}" loading="lazy" onerror="this.src='https://picsum.photos/400/250?random=1'">
             <div class="card-content">
                 <div class="card-category">${escapeHtml(post.labels[0] || 'News')}</div>
                 <h3 class="card-title"><a href="post.html?id=${post.id}">${escapeHtml(post.title)}</a></h3>
@@ -248,7 +250,7 @@ function loadPost() {
                         <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}" target="_blank" class="share-btn share-fb" style="background:#1877f2;color:white;padding:8px 16px;border-radius:40px;text-decoration:none"><i class="fab fa-facebook-f"></i> Share</a>
                         <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(window.location.href)}" target="_blank" class="share-btn share-twitter" style="background:#1da1f2;color:white;padding:8px 16px;border-radius:40px;text-decoration:none"><i class="fab fa-twitter"></i> Tweet</a>
                     </div>
-                    <img src="${post.image}" class="post-featured-img" alt="${escapeHtml(post.title)}" style="width:100%;max-height:500px;object-fit:cover;border-radius:16px;margin:20px 0" onerror="this.src='https://via.placeholder.com/800x400?text=News'">
+                    <img src="${post.image}" class="post-featured-img" alt="${escapeHtml(post.title)}" style="width:100%;max-height:500px;object-fit:cover;border-radius:16px;margin:20px 0" onerror="this.src='https://picsum.photos/800/400?random=1'">
                     <div class="post-content" style="font-size:18px;line-height:1.7">${post.content}</div>
                     <div class="post-labels" style="display:flex;gap:10px;margin-top:30px;flex-wrap:wrap">
                         ${post.labels.map(label => `<span class="label-badge" style="background:#eef2fa;padding:5px 14px;border-radius:30px">${escapeHtml(label)}</span>`).join('')}
@@ -485,12 +487,16 @@ function updateBookmarkCount() {
 }
 
 function fixMissingIcons() {
-    document.querySelector('link[rel="manifest"]')?.remove();
+    // Remove manifest link to fix 404 errors when running locally
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    if (manifestLink) {
+        manifestLink.remove();
+    }
 }
 
 // ==================== INITIALIZE ====================
 function init() {
-    fixMissingIcons();
+    fixMissingIcons();  // This removes the manifest.json request
     initDarkMode();
     initReadingProgress();
     initLiveSearch();
